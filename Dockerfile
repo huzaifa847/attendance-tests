@@ -49,9 +49,12 @@ RUN mkdir -p /etc/apt/keyrings \
     && apt-get install -y google-chrome-stable \
     && rm -rf /var/lib/apt/lists/*
 
-RUN CHROME_VERSION=$(google-chrome --version | awk '{print $3}' | cut -d'.' -f1) \
-    && echo "Chrome major version: $CHROME_VERSION" \
-    && wget -q "https://storage.googleapis.com/chrome-for-testing-public/$(curl -s https://googlechromelabs.github.io/chrome-for-testing/LATEST_RELEASE_STABLE)/linux64/chromedriver-linux64.zip" \
+# Step 4/9
+RUN CHROME_VERSION=$(google-chrome --version | awk '{print $3}') \
+    && echo "Exact Chrome version: $CHROME_VERSION" \
+    && CHROMEDRIVER_URL=$(curl -s "https://googlechromelabs.github.io/chrome-for-testing/known-good-versions-with-downloads.json" | python -c "import sys, json; data=json.load(sys.stdin); print(next(v['downloads']['chromedriver'][0]['url'] for v in data['versions'] if v['version'] == '$CHROME_VERSION' and v['downloads'].get('chromedriver') and v['downloads']['chromedriver'][0]['platform'] == 'linux64'))") \
+    && echo "Downloading Chromedriver from: $CHROMEDRIVER_URL" \
+    && wget -q "$CHROMEDRIVER_URL" -O chromedriver-linux64.zip \
     && unzip chromedriver-linux64.zip \
     && mv chromedriver-linux64/chromedriver /usr/local/bin/ \
     && chmod +x /usr/local/bin/chromedriver \
