@@ -5,11 +5,9 @@ import string
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import Select
-from webdriver_manager.chrome import ChromeDriverManager
 
 APP_URL = "http://13.53.138.23:3000"
 
@@ -21,9 +19,8 @@ def get_driver():
     chrome_options.add_argument("--disable-gpu")
     chrome_options.add_argument("--window-size=1920,1080")
     
-    # WebDriver Manager automatically downloads the matching chromedriver
-    service = Service(ChromeDriverManager().install())
-    driver = webdriver.Chrome(service=service, options=chrome_options)
+    # Selenium 4.6+ automatically handles downloading the correct driver natively!
+    driver = webdriver.Chrome(options=chrome_options)
     
     driver.implicitly_wait(10)
     return driver
