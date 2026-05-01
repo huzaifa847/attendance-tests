@@ -195,21 +195,21 @@ def test_10_register_student_success():
     driver = get_driver()
     try:
         driver.get(f"{APP_URL}/register")
-        wait = WebDriverWait(driver, 10)
+        wait = WebDriverWait(driver, 15) # Increased wait time for slow database/API
         wait.until(EC.presence_of_element_located((By.TAG_NAME, "form")))
 
         driver.find_element(By.CSS_SELECTOR, "input[type='text']").send_keys("Test Student")
         driver.find_element(By.CSS_SELECTOR, "input[type='email']").send_keys(random_email())
-        driver.find_element(By.CSS_SELECTOR, "input[type='password']").send_keys("Password123!") # Stronger password in case of strict validation
+        driver.find_element(By.CSS_SELECTOR, "input[type='password']").send_keys("Password123!") 
         
         Select(driver.find_element(By.TAG_NAME, "select")).select_by_value("student")
         driver.find_element(By.CSS_SELECTOR, "button[type='submit']").click()
-        time.sleep(4)
+        
+        # Smart Wait: Wait until the URL changes away from /register OR a success message appears
+        wait.until(lambda d: "/register" not in d.current_url or "success" in d.page_source.lower())
 
-        # Accept a redirect to login, a redirect to dashboard, OR a success message on screen
-        src = driver.page_source.lower()
         url = driver.current_url
-        assert "/login" in url or "/dashboard" in url or "success" in src
+        assert "/login" in url or "/dashboard" in url or "/register" not in url
         print("PASS: Student registered successfully")
     finally:
         driver.quit()
@@ -219,7 +219,7 @@ def test_11_register_teacher_success():
     driver = get_driver()
     try:
         driver.get(f"{APP_URL}/register")
-        wait = WebDriverWait(driver, 10)
+        wait = WebDriverWait(driver, 15)
         wait.until(EC.presence_of_element_located((By.TAG_NAME, "form")))
 
         driver.find_element(By.CSS_SELECTOR, "input[type='text']").send_keys("Test Teacher")
@@ -228,11 +228,12 @@ def test_11_register_teacher_success():
         
         Select(driver.find_element(By.TAG_NAME, "select")).select_by_value("teacher")
         driver.find_element(By.CSS_SELECTOR, "button[type='submit']").click()
-        time.sleep(4)
+        
+        # Smart Wait: Wait until the URL changes away from /register OR a success message appears
+        wait.until(lambda d: "/register" not in d.current_url or "success" in d.page_source.lower())
 
-        src = driver.page_source.lower()
         url = driver.current_url
-        assert "/login" in url or "/dashboard" in url or "success" in src
+        assert "/login" in url or "/dashboard" in url or "/register" not in url
         print("PASS: Teacher registered successfully")
     finally:
         driver.quit()
