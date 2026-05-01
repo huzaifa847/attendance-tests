@@ -1,5 +1,6 @@
 FROM python:3.11-slim
 
+# Step 1: Install system dependencies
 RUN apt-get update && apt-get install -y \
     wget \
     gnupg \
@@ -42,10 +43,17 @@ RUN apt-get update && apt-get install -y \
     xdg-utils \
     --no-install-recommends
 
-# Replace your current Step 4 with this:
+# Step 2: Install Google Chrome (THIS WAS MISSING!)
+RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | gpg --dearmor -o /usr/share/keyrings/googlechrom-keyring.gpg \
+    && echo "deb [arch=amd64 signed-by=/usr/share/keyrings/googlechrom-keyring.gpg] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list \
+    && apt-get update \
+    && apt-get install -y google-chrome-stable \
+    && rm -rf /var/lib/apt/lists/*
+
+# Step 3: Create WebDriver Manager directory
 RUN mkdir -p /root/.wdm && chown -R root:root /root/.wdm
 
-# Step 4/9
+# Step 4: Install matching ChromeDriver
 RUN CHROME_VERSION=$(google-chrome --version | awk '{print $3}') \
     && echo "Exact Chrome version: $CHROME_VERSION" \
     && CHROMEDRIVER_URL=$(curl -s "https://googlechromelabs.github.io/chrome-for-testing/known-good-versions-with-downloads.json" | python -c "import sys, json; data=json.load(sys.stdin); print(next(v['downloads']['chromedriver'][0]['url'] for v in data['versions'] if v['version'] == '$CHROME_VERSION' and v['downloads'].get('chromedriver') and v['downloads']['chromedriver'][0]['platform'] == 'linux64'))") \
@@ -56,11 +64,16 @@ RUN CHROME_VERSION=$(google-chrome --version | awk '{print $3}') \
     && chmod +x /usr/local/bin/chromedriver \
     && rm -rf chromedriver-linux64.zip chromedriver-linux64
 
+# Step 5: Set up Python environment
 WORKDIR /app
-
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Step 6: Copy test files
 COPY tests/ ./tests/
 
+# Step 7: Create results directory
 RUN mkdir -p /app/test-results
+
+# Run tests
+CMD ["pytest", "tests/", "-v"]
